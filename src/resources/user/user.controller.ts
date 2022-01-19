@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import Controller from '@/utils/interfaces/controller.interface';
 import HttpException from '@/utils/exceptions/http.exception';
 import validationMiddleware from '@/middleware/validation.middleware';
@@ -16,67 +16,42 @@ class UserController implements Controller {
     }
 
     private initialiseRoutes(): void {
-        this.router.post(
-            `${this.path}/register`,
-            validationMiddleware(validate.register),
-            this.register
-        );
-        this.router.post(
-            `${this.path}/login`,
-            validationMiddleware(validate.login),
-            this.login
-        );
+        this.router.post(`${this.path}/register`, validationMiddleware(validate.register), this.register);
+        this.router.post(`${this.path}/login`, validationMiddleware(validate.login), this.login);
         this.router.get(`${this.path}`, authenticated, this.getUser);
     }
 
-    private register = async (
-        req: Request,
-        res: Response,
-        next: NextFunction
-    ): Promise<Response | void> => {
+    private async register(req: Request, res: Response, next: NextFunction) {
         try {
             const { name, email, password } = req.body;
 
-            const token = await this.UserService.register(
-                name,
-                email,
-                password,
-                'user'
-            );
+            const token = await this.UserService.register(name, email, password, 'user');
 
             res.status(201).json({ token });
         } catch (error) {
-            next(new HttpException(400, error.message));
+            const { message } = error as Error;
+            next(new HttpException(400, message));
         }
-    };
+    }
 
-    private login = async (
-        req: Request,
-        res: Response,
-        next: NextFunction
-    ): Promise<Response | void> => {
+    private async login(req: Request, res: Response, next: NextFunction) {
         try {
             const { email, password } = req.body;
-
             const token = await this.UserService.login(email, password);
-
             res.status(200).json({ token });
         } catch (error) {
-            next(new HttpException(400, error.message));
+            const { message } = error as Error;
+            next(new HttpException(400, message));
         }
-    };
+    }
 
-    private getUser = (
-        req: Request,
-        res: Response,
-        next: NextFunction
-    ): Response | void => {
+    private getUser(req: Request, res: Response, next: NextFunction) {
         if (!req.user) {
             return next(new HttpException(404, 'No logged in user'));
         }
 
         res.status(200).send({ data: req.user });
-    };
+    }
 }
 
 export default UserController;

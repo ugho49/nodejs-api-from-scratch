@@ -7,12 +7,7 @@ class UserService {
     /**
      * Register a new user
      */
-    public async register(
-        name: string,
-        email: string,
-        password: string,
-        role: string
-    ): Promise<string | Error> {
+    public async register(name: string, email: string, password: string, role: string): Promise<string | Error> {
         try {
             const user = await this.user.create({
                 name,
@@ -21,21 +16,17 @@ class UserService {
                 role,
             });
 
-            const accessToken = token.createToken(user);
-
-            return accessToken;
+            return token.createToken(user);
         } catch (error) {
-            throw new Error(error.message);
+            const { message } = error as Error;
+            throw new Error(message);
         }
     }
 
     /**
      * Attempt to login a user
      */
-    public async login(
-        email: string,
-        password: string
-    ): Promise<string | Error> {
+    public async login(email: string, password: string): Promise<string | Error> {
         try {
             const user = await this.user.findOne({ email });
 
