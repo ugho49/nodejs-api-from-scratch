@@ -6,14 +6,13 @@ import validate from '@/resources/post/post.validation';
 import PostService from '@/resources/post/post.service';
 
 export default class PostController implements Controller {
-    readonly #PATH = '/posts';
     readonly #postService = new PostService();
 
-    public routes(): Router {
-        const router = Router();
-        router.get(`${this.#PATH}`, this.#getAll);
-        router.post(`${this.#PATH}`, validationMiddleware(validate.create), this.#create);
-        return router;
+    public routes(router: Router): Router {
+        const routes = Router();
+        routes.get('/', this.#getAll);
+        routes.post('/', validationMiddleware(validate.create), this.#create);
+        return router.use('/posts', routes);
     }
 
     #create = async (req: Request, res: Response, next: NextFunction) => {

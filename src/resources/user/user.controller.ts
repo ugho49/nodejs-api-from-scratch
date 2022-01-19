@@ -7,15 +7,14 @@ import UserService from '@/resources/user/user.service';
 import authenticated from '@/middleware/authenticated.middleware';
 
 export default class UserController implements Controller {
-    readonly #PATH = '/users';
     readonly #userService = new UserService();
 
-    public routes(): Router {
-        const router = Router();
-        router.get(`${this.#PATH}`, authenticated, this.#getUser);
-        router.post(`${this.#PATH}/register`, validationMiddleware(validate.register), this.#register);
-        router.post(`${this.#PATH}/login`, validationMiddleware(validate.login), this.#login);
-        return router;
+    public routes(router: Router): Router {
+        const routes = Router();
+        routes.get('/', authenticated, this.#getUser);
+        routes.post('/register', validationMiddleware(validate.register), this.#register);
+        routes.post('/login', validationMiddleware(validate.login), this.#login);
+        return router.use('/users', routes);
     }
 
     #register = async (req: Request, res: Response, next: NextFunction) => {

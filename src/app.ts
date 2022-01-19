@@ -1,4 +1,4 @@
-import express, { Application } from 'express';
+import express, { Application, Router } from 'express';
 import mongoose from 'mongoose';
 import compression from 'compression';
 import cors from 'cors';
@@ -42,7 +42,7 @@ export default class App {
     #initializeControllers(controllers: Controller[]) {
         log.info('Initialize Controllers');
         controllers.forEach((controller: Controller) => {
-            this.#app.use('/api', controller.routes());
+            this.#app.use('/api', controller.routes(Router()));
         });
     }
 
