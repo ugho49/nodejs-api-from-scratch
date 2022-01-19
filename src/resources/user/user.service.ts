@@ -1,15 +1,13 @@
 import UserModel from '@/resources/user/user.model';
 import token from '@/utils/token';
 
-class UserService {
-    private user = UserModel;
-
+export default class UserService {
     /**
      * Register a new user
      */
-    public async register(name: string, email: string, password: string, role: string): Promise<string | Error> {
+    public register = async (name: string, email: string, password: string, role: string): Promise<string | Error> => {
         try {
-            const user = await this.user.create({
+            const user = await UserModel.create({
                 name,
                 email,
                 password,
@@ -21,14 +19,14 @@ class UserService {
             const { message } = error as Error;
             throw new Error(message);
         }
-    }
+    };
 
     /**
      * Attempt to login a user
      */
-    public async login(email: string, password: string): Promise<string | Error> {
+    public login = async (email: string, password: string): Promise<string | Error> => {
         try {
-            const user = await this.user.findOne({ email });
+            const user = await UserModel.findOne({ email });
 
             if (!user) {
                 throw new Error('Unable to find user with that email address');
@@ -40,9 +38,8 @@ class UserService {
                 throw new Error('Wrong credentials given');
             }
         } catch (error) {
-            throw new Error('Unable to create user');
+            const { message } = error as Error;
+            throw new Error(message || 'Unable to create user');
         }
-    }
+    };
 }
-
-export default UserService;

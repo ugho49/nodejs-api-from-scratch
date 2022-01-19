@@ -1,34 +1,39 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import Controller from '@/utils/interfaces/controller.interface';
+import { NextFunction, Request, Response, Router } from 'express';
+import { Controller } from '@/utils/interfaces/controller.interface';
 import HttpException from '@/utils/exceptions/http.exception';
 import validationMiddleware from '@/middleware/validation.middleware';
 import validate from '@/resources/post/post.validation';
 import PostService from '@/resources/post/post.service';
 
-class PostController implements Controller {
-    public path = '/posts';
-    public router = Router();
-    private PostService = new PostService();
+export default class PostController implements Controller {
+    readonly #PATH = '/posts';
+    readonly #postService = new PostService();
 
-    constructor() {
-        this.initialiseRoutes();
+    public routes(): Router {
+        const router = Router();
+        router.get(`${this.#PATH}`, this.#getAll);
+        router.post(`${this.#PATH}`, validationMiddleware(validate.create), this.#create);
+        return router;
     }
 
-    private initialiseRoutes(): void {
-        this.router.post(`${this.path}`, validationMiddleware(validate.create), this.create);
-    }
-
-    private create = async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
+    #create = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { title, body } = req.body;
 
-            const post = await this.PostService.create(title, body);
+            const post = await this.#postService.create(title, body);
 
-            res.status(201).json({ post });
+            return res.status(201).json({ post });
         } catch (error) {
-            next(new HttpException(400, 'Cannot create post'));
+            return next(new HttpException(400, 'Cannot create post', error));
+        }
+    };
+
+    #getAll = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const posts = await this.#postService.findAll();
+            return res.status(200).json({ posts });
+        } catch (error) {
+            return next(new HttpException(500, 'Cannot get posts', error));
         }
     };
 }
-
-export default PostController;

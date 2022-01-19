@@ -7,6 +7,6 @@ import UserController from '@/resources/user/user.controller';
 
 validateEnv();
 
-const app = new App([new PostController(), new UserController()], Number(process.env.PORT));
-
-app.listen();
+const app = new App();
+app.init([new PostController(), new UserController()]);
+app.listen(Number(process.env.PORT));

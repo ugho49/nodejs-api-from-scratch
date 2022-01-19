@@ -3,54 +3,58 @@ import mongoose from 'mongoose';
 import compression from 'compression';
 import cors from 'cors';
 import morgan from 'morgan';
-import Controller from '@/utils/interfaces/controller.interface';
-import ErrorMiddleware from '@/middleware/error.middleware';
+import { Controller } from '@/utils/interfaces/controller.interface';
+import { errorHandler, notFound } from '@/middleware/error.middleware';
 import helmet from 'helmet';
+import log from '@/utils/logger';
 
-class App {
-    public express: Application;
-    public port: number;
+export default class App {
+    #app: Application;
 
-    constructor(controllers: Controller[], port: number) {
-        this.express = express();
-        this.port = port;
-
-        this.initialiseDatabaseConnection();
-        this.initialiseMiddleware();
-        this.initialiseControllers(controllers);
-        this.initialiseErrorHandling();
+    constructor() {
+        this.#app = express();
     }
 
-    private initialiseMiddleware(): void {
-        this.express.use(helmet());
-        this.express.use(cors());
-        this.express.use(morgan('dev'));
-        this.express.use(express.json());
-        this.express.use(express.urlencoded({ extended: false }));
-        this.express.use(compression());
+    public init(controllers: Controller[]) {
+        this.#initializeDatabaseConnection();
+        this.#initializeMiddlewares();
+        this.#initializeControllers(controllers);
+        this.#initializeErrorHandling();
     }
 
-    private initialiseControllers(controllers: Controller[]): void {
+    public listen(port: number) {
+        this.#app.listen(port, () => {
+            log.info(`App listening on the port ${port} in ${process.env.NODE_ENV} mode`);
+        });
+    }
+
+    #initializeMiddlewares() {
+        log.info('Initialize Middlewares');
+
+        this.#app.use(helmet());
+        this.#app.use(cors());
+        this.#app.use(morgan('dev'));
+        this.#app.use(express.json());
+        this.#app.use(express.urlencoded({ extended: false }));
+        this.#app.use(compression());
+    }
+
+    #initializeControllers(controllers: Controller[]) {
+        log.info('Initialize Controllers');
         controllers.forEach((controller: Controller) => {
-            this.express.use('/api', controller.router);
+            this.#app.use('/api', controller.routes());
         });
     }
 
-    private initialiseErrorHandling(): void {
-        this.express.use(ErrorMiddleware);
+    #initializeErrorHandling() {
+        log.info('Initialize Error Handling');
+        this.#app.use(notFound);
+        this.#app.use(errorHandler);
     }
 
-    private initialiseDatabaseConnection(): void {
-        const { MONGO_USER, MONGO_PASSWORD, MONGO_PATH } = process.env;
-
-        mongoose.connect(`mongodb://${MONGO_USER}:${MONGO_PASSWORD}${MONGO_PATH}`);
-    }
-
-    public listen(): void {
-        this.express.listen(this.port, () => {
-            console.log(`App listening on the port ${this.port}`);
-        });
+    #initializeDatabaseConnection() {
+        const { MONGO_URL } = process.env;
+        log.info('Initialize Database connection');
+        mongoose.connect(MONGO_URL as string);
     }
 }
-
-export default App;

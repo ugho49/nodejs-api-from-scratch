@@ -14,8 +14,11 @@ function validationMiddleware(schema: Joi.Schema): RequestHandler {
             next();
         } catch (e: unknown) {
             const { details } = e as ValidationError;
-            const errors = details.map((error) => error.message);
-            res.status(400).send({ errors: errors });
+            const errors = details.map((error) => {
+                const property = error.context?.label;
+                return { property: property, message: error.message.replace(`"${property}" `, '') };
+            });
+            res.status(400).json({ errors: errors });
         }
     };
 }
